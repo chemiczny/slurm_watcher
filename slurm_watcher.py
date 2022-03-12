@@ -73,7 +73,7 @@ class JobStatusGUI:
     def __init__(self, notebook):
         self.ntbk = notebook
 
-        self.savePassword = True
+        self.savePassword = False
 
         self.jobMonitor = ttk.Frame(self.ntbk)
         self.loginData = ttk.Frame(self.ntbk)
