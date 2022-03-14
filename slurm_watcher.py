@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import os
 import sys
 import json
 from os.path import expanduser, join, isdir, isfile, normpath
@@ -74,7 +74,7 @@ class JobStatusGUI:
     def __init__(self, notebook):
         self.ntbk = notebook
 
-        self.savePassword = True
+        self.savePassword = False
 
         self.jobMonitor = ttk.Frame(self.ntbk)
         self.loginData = ttk.Frame(self.ntbk)
@@ -91,7 +91,7 @@ class JobStatusGUI:
 
         self.client = paramiko.client.SSHClient()
         self.client.load_system_host_keys()
-        self.client.set_missing_host_key_policy(paramiko.RejectPolicy)
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         self.accounts = []
 
@@ -121,10 +121,15 @@ class JobStatusGUI:
 
         self.scrDir = expanduser("~/.slurm_watcher")
         if platform.system() != "Linux":
-            localAppDataDir = getenv("%LOCALAPPDATA%")
+            localAppDataDir = getenv("LOCALAPPDATA")
             self.scrDir = join(localAppDataDir, "slurm_watcher")
-        print(self.scrDir)
+
         self.configFile = join(self.scrDir, "config.json")
+        self.currentLocalDir = os.getcwd()
+        self.localCurrentDirEntry.configure(state="normal")
+        self.localCurrentDirEntry.delete(0, "end")
+        self.localCurrentDirEntry.insert(0, self.currentLocalDir)
+        self.localCurrentDirEntry.configure(state="readonly")
 
         if not isdir(self.scrDir):
             mkdir(self.scrDir)
@@ -133,6 +138,12 @@ class JobStatusGUI:
             with open(self.configFile, 'r') as fp:
                 state = json.load(fp)
                 self.loadState(state)
+        else:
+            self.pathList.insert("end", self.currentLocalDir)
+            state = self.getState()
+            with open(self.configFile, 'w') as fp:
+                json.dump(state, fp)
+
 
     def gridJobMonitor(self):
         self.tree_data = ttk.Treeview(self.jobMonitor, columns=self.treeHeaders, show="headings", heigh=15)
@@ -313,8 +324,11 @@ class JobStatusGUI:
             tkMessageBox.showwarning(title="Cannot execute", message="No command for this button")
             return
 
+        currentDir = os.getcwd()
+        os.chdir(self.currentLocalDir)
         command2execute = self.customButtonsLocalData[buttonInd]["command"]
         exec(command2execute)
+        os.chdir(currentDir)
 
     def customButtonCommandLocalCommander(self, buttonInd):
         if buttonInd >= len(self.localCommanderButtonsData):
@@ -604,11 +618,14 @@ class JobStatusGUI:
 
         fileSelection = self.directoryViewList.get(fileSelection)
 
-        fullPath = join(dir2go, fileSelection)
+        #fullPath = join(dir2go, fileSelection)
+        #fast fix to work on windows
+        fullPath = dir2go +"/" +  fileSelection
+        path2save = join(self.currentLocalDir, fileSelection)
 
         sftp = self.client.open_sftp()
 
-        sftp.get(fullPath, fileSelection)
+        sftp.get(fullPath, path2save)
 
         sftp.close()
 
@@ -632,14 +649,17 @@ class JobStatusGUI:
 
         fileSelection = self.directoryViewList.get(fileSelection)
 
-        fullPath = join(dir2go, fileSelection)
+        #fullPath = join(dir2go, fileSelection)
+        #fast fix to work on windows
+        fullPath = dir2go +"/" + fileSelection
+        path2save = join(self.currentLocalDir, fileSelection)
 
         sftp = self.client.open_sftp()
 
-        sftp.get(fullPath, fileSelection)
+        sftp.get(fullPath, path2save)
 
         sftp.close()
-        cmd.load(fileSelection)
+        cmd.load(path2save)
 
     def gridLoginData(self):
         loginLabel = Tkinter.Label(self.loginData, text="login")
@@ -667,7 +687,7 @@ class JobStatusGUI:
         self.passwordEntry = Tkinter.Entry(self.loginData, width=20)
         self.passwordEntry.grid(row=3, column=1)
 
-        jobManagerDirLabel = Tkinter.Label(self.loginData, text="JobManagerPro dir")
+        jobManagerDirLabel = Tkinter.Label(self.loginData, text="calculationFlow dir")
         jobManagerDirLabel.grid(row=4, column=0)
 
         self.jobManagerDirEntry = Tkinter.Entry(self.loginData, width=20)
