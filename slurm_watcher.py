@@ -4,8 +4,9 @@
 import sys
 import json
 from os.path import expanduser, join, isdir, isfile, normpath
-from os import mkdir, listdir, getcwd, chdir
+from os import mkdir, listdir, getcwd, chdir, getenv
 from copy import copy
+import platform
 
 try:
     from pymol import cmd, plugins
@@ -73,7 +74,7 @@ class JobStatusGUI:
     def __init__(self, notebook):
         self.ntbk = notebook
 
-        self.savePassword = False
+        self.savePassword = True
 
         self.jobMonitor = ttk.Frame(self.ntbk)
         self.loginData = ttk.Frame(self.ntbk)
@@ -118,7 +119,11 @@ class JobStatusGUI:
 
         self.grid()
 
-        self.scrDir = expanduser("~/.jobStatusPro")
+        self.scrDir = expanduser("~/.slurm_watcher")
+        if platform.system() != "Linux":
+            localAppDataDir = getenv("%LOCALAPPDATA%")
+            self.scrDir = join(localAppDataDir, "slurm_watcher")
+        print(self.scrDir)
         self.configFile = join(self.scrDir, "config.json")
 
         if not isdir(self.scrDir):
