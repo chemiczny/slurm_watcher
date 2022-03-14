@@ -144,7 +144,6 @@ class JobStatusGUI:
             with open(self.configFile, 'w') as fp:
                 json.dump(state, fp)
 
-
     def gridJobMonitor(self):
         self.tree_data = ttk.Treeview(self.jobMonitor, columns=self.treeHeaders, show="headings", heigh=15)
         for header in self.treeHeaders:
@@ -358,7 +357,7 @@ class JobStatusGUI:
 
         if fileSelectionRequired:
             fileSelection = self.directoryViewListLocal.get(fileSelection)
-            command2execute = command2execute.replace("$1", join(self.currentLocalDir, fileSelection))
+            command2execute = command2execute.replace("$1", fileSelection)
             previousDir = getcwd()
             chdir(self.currentLocalDir)
         exec(command2execute)
