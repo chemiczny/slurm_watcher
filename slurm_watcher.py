@@ -622,10 +622,11 @@ class JobStatusGUI:
         fullPath = dir2go +"/" +  fileSelection
         path2save = join(self.currentLocalDir, fileSelection)
 
+        lastDir = getcwd()
         sftp = self.client.open_sftp()
-
+        chdir(self.currentLocalDir)
         sftp.get(fullPath, path2save)
-
+        chdir(lastDir)
         sftp.close()
 
     def downloadAndLoadToPymol(self):
@@ -653,10 +654,11 @@ class JobStatusGUI:
         fullPath = dir2go +"/" + fileSelection
         path2save = join(self.currentLocalDir, fileSelection)
 
+        lastDir = getcwd()
         sftp = self.client.open_sftp()
-
+        chdir(self.currentLocalDir)
         sftp.get(fullPath, path2save)
-
+        chdir(lastDir)
         sftp.close()
         cmd.load(path2save)
 
